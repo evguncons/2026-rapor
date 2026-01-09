@@ -113,7 +113,7 @@
 
         <div class="p-4 border-t border-slate-100">
             <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
-                v3.2 &bull; Light
+                v3.3 &bull; Light
             </div>
         </div>
     </aside>
@@ -125,8 +125,9 @@
             <div>
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" id="pageTitle">Aylık Rapor</h2>
                 <div class="flex items-center gap-2 mt-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <p class="text-xs text-slate-500 font-medium" id="lastUpdated">Veriler yükleniyor...</p>
+                    <div id="lastUpdated" class="flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all text-slate-400 bg-slate-100 border border-slate-200">
+                        <i class="fas fa-clock"></i> Bekleniyor...
+                    </div>
                 </div>
             </div>
             
@@ -153,7 +154,9 @@
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Ciro</p>
                         <i class="fas fa-wallet text-emerald-500 bg-emerald-50 p-2 rounded-lg"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-revenue">₺0</h3>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight transition-all" id="kpi-revenue">
+                        <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
+                    </h3>
                 </div>
 
                 <!-- Satış -->
@@ -162,7 +165,9 @@
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Satış</p>
                         <i class="fas fa-shopping-bag text-blue-500 bg-blue-50 p-2 rounded-lg"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-sales">0</h3>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-sales">
+                        <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
+                    </h3>
                 </div>
 
                 <!-- Çağrı -->
@@ -171,7 +176,9 @@
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Çağrı</p>
                         <i class="fas fa-phone-alt text-violet-500 bg-violet-50 p-2 rounded-lg"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-calls">0</h3>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-calls">
+                        <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
+                    </h3>
                 </div>
 
                 <!-- Dönüşüm -->
@@ -180,7 +187,9 @@
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Dönüşüm</p>
                         <i class="fas fa-percent text-amber-500 bg-amber-50 p-2 rounded-lg"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-conversion">%0</h3>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-conversion">
+                        <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
+                    </h3>
                 </div>
 
                 <!-- Sepet -->
@@ -189,7 +198,9 @@
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Ort. Sepet</p>
                         <i class="fas fa-tag text-rose-500 bg-rose-50 p-2 rounded-lg"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-basket">₺0</h3>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-basket">
+                        <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
+                    </h3>
                 </div>
             </div>
 
@@ -233,7 +244,10 @@
                         <span class="text-[10px] uppercase tracking-wider bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold">Günlük</span>
                     </div>
                     <div class="heatmap-grid" id="heatmapContainer">
-                        <div class="text-slate-400 text-sm col-span-full text-center py-10">Veri yükleniyor...</div>
+                        <div class="text-slate-400 text-sm col-span-full text-center py-10 flex flex-col items-center gap-2">
+                            <i class="fas fa-circle-notch fa-spin text-fuchsia-400 text-xl"></i>
+                            <span>Yükleniyor...</span>
+                        </div>
                     </div>
                     <div class="flex justify-between items-center mt-6 text-xs text-slate-500 font-medium">
                         <span>Düşük</span>
@@ -278,7 +292,6 @@
             Chart.defaults.font.family = "'Outfit', sans-serif";
             Chart.defaults.color = '#64748b'; 
             
-            // Dropdown değişikliği
             document.getElementById('periodSelector').addEventListener('change', fetchData);
 
             try {
@@ -286,18 +299,10 @@
                 const data = await res.json();
                 periods = data;
                 
-                // Gelişmiş Yıl Ayrıştırma (Regex ile)
-                // "OCAK 2025", "2025-OCAK" gibi formatlardan 2025'i çeker
-                const extractedYears = new Set();
-                data.forEach(p => {
-                    const match = p.match(/(\d{4})/);
-                    if (match && match[0]) {
-                        extractedYears.add(match[0]);
-                    }
-                });
-                
-                // Sırala ve kaydet
-                years = [...extractedYears].sort().reverse();
+                years = [...new Set(data.map(p => {
+                    const parts = p.trim().split(' ');
+                    return parts.length > 1 ? parts[parts.length-1] : null;
+                }).filter(y => y && !isNaN(y)))].sort().reverse();
 
                 updateSelector();
                 fetchData();
@@ -314,12 +319,10 @@
                 btnMonthly.classList.add('active');
                 btnYearly.classList.remove('active');
                 document.getElementById('pageTitle').innerText = "Aylık Rapor";
-                document.getElementById('periodLabel').innerText = "Dönem:";
             } else {
                 btnYearly.classList.add('active');
                 btnMonthly.classList.remove('active');
                 document.getElementById('pageTitle').innerText = "Yıllık Trend Analizi";
-                document.getElementById('periodLabel').innerText = "Yıl:";
             }
             
             updateSelector();
@@ -344,18 +347,25 @@
         }
 
         async function fetchData() {
-            // Selector değeri yoksa ilk değeri almaya çalış (mod değişiminde)
-            let val = document.getElementById('periodSelector').value;
-            const list = mode === 'monthly' ? periods : years;
-            
-            if(!val && list.length > 0) {
-                val = list[0];
-            }
+            const val = document.getElementById('periodSelector').value;
+            const status = document.getElementById('lastUpdated');
             
             if(!val) return;
 
-            const status = document.getElementById('lastUpdated');
-            status.innerText = "Güncelleniyor...";
+            // LOADING STATE UI START
+            status.innerHTML = '<i class="fas fa-sync fa-spin text-amber-500"></i> <span class="text-amber-600">Veriler Güncelleniyor...</span>';
+            status.className = "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-amber-50 border border-amber-200 shadow-sm";
+            
+            // KPI Loading Spinner
+            const spinner = '<span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>';
+            document.getElementById('kpi-revenue').innerHTML = spinner;
+            document.getElementById('kpi-sales').innerHTML = spinner;
+            document.getElementById('kpi-calls').innerHTML = spinner;
+            document.getElementById('kpi-conversion').innerHTML = spinner;
+            document.getElementById('kpi-basket').innerHTML = spinner;
+
+            // Heatmap Loading
+            document.getElementById('heatmapContainer').innerHTML = '<div class="col-span-full text-center text-slate-400 py-10 flex flex-col items-center gap-2"><i class="fas fa-circle-notch fa-spin text-fuchsia-400 text-xl"></i><span>Veriler işleniyor...</span></div>';
             
             let url = `${APPSCRIPT_URL}?action=${mode === 'monthly' ? 'getDashboardData' : 'getAnnualStats'}`;
             url += mode === 'monthly' ? `&sheetName=${encodeURIComponent(val)}` : `&year=${encodeURIComponent(val)}`;
@@ -365,9 +375,14 @@
                 const data = await res.json();
                 if(data.error) throw new Error(data.error);
                 render(data);
-                status.innerText = "Şimdi güncellendi";
+                
+                // SUCCESS STATE
+                status.innerHTML = '<i class="fas fa-check-circle text-emerald-500"></i> <span class="text-emerald-600">Veriler Güncel</span>';
+                status.className = "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-emerald-50 border border-emerald-200 shadow-sm";
+                
             } catch(e) { 
-                status.innerText = "Bağlantı Hatası"; 
+                status.innerHTML = '<i class="fas fa-exclamation-circle text-rose-500"></i> <span class="text-rose-600">Bağlantı Hatası</span>';
+                status.className = "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-rose-50 border border-rose-200 shadow-sm";
                 console.error(e); 
             }
         }
@@ -379,7 +394,6 @@
             document.getElementById('kpi-basket').innerText = fmt(data.kpis.avgBasket);
             
             if(mode === 'monthly') {
-                // AYLIK GÖRÜNÜM
                 document.getElementById('kpi-sales').innerText = data.kpis.totalSales;
                 document.getElementById('kpi-calls').innerText = data.kpis.totalCalls;
                 document.getElementById('kpi-conversion').innerText = `%${data.kpis.conversionRate}`;
@@ -393,7 +407,6 @@
                 renderHeatmap(data.charts.heatmap);
 
             } else {
-                // YILLIK GÖRÜNÜM
                 document.getElementById('kpi-sales').innerText = data.kpis.totalSales; 
                 document.getElementById('kpi-calls').innerText = data.kpis.totalCalls || "-"; 
                 document.getElementById('kpi-conversion').innerText = `%${data.kpis.conversionRate || 0}`;
@@ -449,8 +462,8 @@
             if(charts[id]) charts[id].destroy();
             
             const gradient = ctx.createLinearGradient(0,0,0,400);
-            gradient.addColorStop(0, '#d946ef'); // Fuchsia 500
-            gradient.addColorStop(1, '#c026d3'); // Fuchsia 600
+            gradient.addColorStop(0, '#d946ef'); 
+            gradient.addColorStop(1, '#c026d3'); 
 
             charts[id] = new Chart(ctx, {
                 type: type,
@@ -493,7 +506,6 @@
             const top5 = dataItems.slice(0,5);
             const others = dataItems.slice(5).reduce((acc, curr) => acc + curr.revenue, 0);
 
-            // Light Vibrant Colors
             const colors = ['#d946ef', '#ec4899', '#f43f5e', '#8b5cf6', '#6366f1', '#3b82f6'];
 
             charts[id] = new Chart(ctx, {
