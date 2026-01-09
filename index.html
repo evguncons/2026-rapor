@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hedef AVM Rapor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        brand: { 500: '#d946ef', 600: '#c026d3' } // Magenta/Fuchsia
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f8fafc; color: #1e293b; }
+        
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(192, 38, 211, 0.15); /* Magenta Shadow */
+            border-color: #f0abfc;
+        }
+        
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
+            gap: 6px;
+        }
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.2s ease;
+            cursor: default;
+            background-color: #f1f5f9;
+        }
+        .heatmap-cell:hover { transform: scale(1.15); z-index: 10; color: white; background-color: #c026d3 !important; }
+        
+        /* Magenta Isı Renkleri */
+        .heat-0 { background-color: #f1f5f9; color: #cbd5e1; }
+        .heat-1 { background-color: #fae8ff; color: #a21caf; }
+        .heat-2 { background-color: #f5d0fe; color: #a21caf; }
+        .heat-3 { background-color: #e879f9; color: white; }
+        .heat-4 { background-color: #d946ef; color: white; }
+        .heat-5 { background-color: #c026d3; color: white; box-shadow: 0 0 10px rgba(192, 38, 211, 0.4); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Nav Button Active State */
+        .nav-btn.active {
+            background: linear-gradient(90deg, rgba(217, 70, 239, 0.1) 0%, rgba(217, 70, 239, 0) 100%);
+            border-left: 4px solid #d946ef; /* Magenta */
+            color: #c026d3;
+            font-weight: 600;
+        }
+        .nav-btn {
+            border-left: 4px solid transparent;
+            color: #64748b;
+        }
+        .nav-btn:hover { color: #c026d3; background-color: #fdf4ff; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm">
+
+    <!-- Sidebar -->
+    <aside class="w-16 md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col transition-all duration-300 z-20 shadow-sm">
+        <div class="h-20 flex items-center justify-center md:justify-start px-6 border-b border-slate-100">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight hidden md:block">
+                HEDEF AVM <span class="font-light text-fuchsia-600">RAPOR</span>
+            </h1>
+            <span class="md:hidden text-fuchsia-600 font-bold text-xl">H</span>
+        </div>
+        
+        <nav class="flex-1 py-6 space-y-1">
+            <button onclick="setMode('monthly')" id="nav-monthly" class="nav-btn active w-full flex items-center justify-center md:justify-start gap-4 px-6 py-3.5 transition-all group">
+                <i class="fas fa-chart-pie w-5 text-center transition-transform group-hover:scale-110"></i> 
+                <span class="hidden md:block">Genel Bakış</span>
+            </button>
+            <button onclick="setMode('yearly')" id="nav-yearly" class="nav-btn w-full flex items-center justify-center md:justify-start gap-4 px-6 py-3.5 transition-all group">
+                <i class="fas fa-chart-line w-5 text-center transition-transform group-hover:scale-110"></i> 
+                <span class="hidden md:block">Yıllık Trend</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100">
+            <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
+                v3.2 &bull; Light
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto relative flex flex-col bg-[#f8fafc]">
+        <!-- Header -->
+        <header class="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-10 px-4 md:px-8 flex justify-between items-center shrink-0">
+            <div>
+                <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" id="pageTitle">Aylık Rapor</h2>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p class="text-xs text-slate-500 font-medium" id="lastUpdated">Veriler yükleniyor...</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="relative group">
+                    <select id="periodSelector" class="bg-white text-slate-700 text-sm rounded-xl pl-4 pr-10 py-2.5 border border-slate-200 focus:outline-none focus:border-fuchsia-500 cursor-pointer appearance-none shadow-sm transition-all hover:border-fuchsia-300">
+                        <option>Yükleniyor...</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-3.5 text-slate-400 pointer-events-none group-hover:text-fuchsia-500 transition-colors"></i>
+                </div>
+                <button onclick="fetchData()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white p-2.5 rounded-xl transition-all shadow-lg shadow-fuchsia-600/20 active:scale-95">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-4 md:p-8 space-y-6 flex-1 overflow-y-auto max-w-[1920px] mx-auto w-full">
+            
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Ciro -->
+                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-emerald-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Ciro</p>
+                        <i class="fas fa-wallet text-emerald-500 bg-emerald-50 p-2 rounded-lg"></i>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-revenue">₺0</h3>
+                </div>
+
+                <!-- Satış -->
+                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-blue-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Satış</p>
+                        <i class="fas fa-shopping-bag text-blue-500 bg-blue-50 p-2 rounded-lg"></i>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-sales">0</h3>
+                </div>
+
+                <!-- Çağrı -->
+                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-violet-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Çağrı</p>
+                        <i class="fas fa-phone-alt text-violet-500 bg-violet-50 p-2 rounded-lg"></i>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-calls">0</h3>
+                </div>
+
+                <!-- Dönüşüm -->
+                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-amber-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Dönüşüm</p>
+                        <i class="fas fa-percent text-amber-500 bg-amber-50 p-2 rounded-lg"></i>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-conversion">%0</h3>
+                </div>
+
+                <!-- Sepet -->
+                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-rose-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Ort. Sepet</p>
+                        <i class="fas fa-tag text-rose-500 bg-rose-50 p-2 rounded-lg"></i>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight" id="kpi-basket">₺0</h3>
+                </div>
+            </div>
+
+            <!-- Main Charts Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Kategori Analizi (Bar) -->
+                <div class="glass-card p-6 lg:col-span-2 flex flex-col h-[420px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-fuchsia-600 rounded-full"></span>
+                            <span id="chartCategoryTitle">Kategori Bazlı Ciro</span>
+                        </h3>
+                    </div>
+                    <div class="flex-1 w-full relative"><canvas id="chartCategory"></canvas></div>
+                </div>
+
+                <!-- Kaynak Analizi (Doughnut) -->
+                <div class="glass-card p-6 flex flex-col h-[420px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-pink-500 rounded-full"></span>
+                            <span>Müşteri Kaynağı</span>
+                        </h3>
+                    </div>
+                    <div class="flex-1 w-full relative flex justify-center items-center">
+                        <canvas id="chartMedia"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary Area: Heatmap & Branch -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Isı Dağılımı -->
+                <div class="glass-card p-6 flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-amber-500 rounded-full"></span>
+                            <span>Satış Yoğunluğu</span>
+                        </h3>
+                        <span class="text-[10px] uppercase tracking-wider bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold">Günlük</span>
+                    </div>
+                    <div class="heatmap-grid" id="heatmapContainer">
+                        <div class="text-slate-400 text-sm col-span-full text-center py-10">Veri yükleniyor...</div>
+                    </div>
+                    <div class="flex justify-between items-center mt-6 text-xs text-slate-500 font-medium">
+                        <span>Düşük</span>
+                        <div class="flex gap-1">
+                            <div class="w-4 h-1.5 bg-fuchsia-100 rounded-full"></div>
+                            <div class="w-4 h-1.5 bg-fuchsia-300 rounded-full"></div>
+                            <div class="w-4 h-1.5 bg-fuchsia-500 rounded-full"></div>
+                            <div class="w-4 h-1.5 bg-fuchsia-700 rounded-full"></div>
+                        </div>
+                        <span>Yüksek</span>
+                    </div>
+                </div>
+
+                <!-- Şube Performansı -->
+                <div class="glass-card p-6 flex flex-col h-[400px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
+                            <span id="chartBranchTitle">Şube Performansı</span>
+                        </h3>
+                    </div>
+                    <div class="flex-1 w-full relative"><canvas id="chartBranch"></canvas></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- AYARLAR ---
+        const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbypySbmlvf4Z9UtWkZeUF3BIJEt91BjysI-mbe10KNSl--aG2FLkWn4CoLOCXtP0TAy/exec"; 
+
+        // STATE
+        let mode = 'monthly';
+        let charts = {};
+        let periods = [];
+        let years = [];
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', async () => {
+            if(!APPSCRIPT_URL) alert("Lütfen APPSCRIPT_URL ekleyin!");
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+            Chart.defaults.color = '#64748b'; 
+            
+            // Dropdown değişikliği
+            document.getElementById('periodSelector').addEventListener('change', fetchData);
+
+            try {
+                const res = await fetch(`${APPSCRIPT_URL}?action=getAvailablePeriods`);
+                const data = await res.json();
+                periods = data;
+                
+                // Gelişmiş Yıl Ayrıştırma (Regex ile)
+                // "OCAK 2025", "2025-OCAK" gibi formatlardan 2025'i çeker
+                const extractedYears = new Set();
+                data.forEach(p => {
+                    const match = p.match(/(\d{4})/);
+                    if (match && match[0]) {
+                        extractedYears.add(match[0]);
+                    }
+                });
+                
+                // Sırala ve kaydet
+                years = [...extractedYears].sort().reverse();
+
+                updateSelector();
+                fetchData();
+            } catch(e) { console.error("Init Error:", e); }
+        });
+
+        function setMode(newMode) {
+            mode = newMode;
+            
+            const btnMonthly = document.getElementById('nav-monthly');
+            const btnYearly = document.getElementById('nav-yearly');
+
+            if (mode === 'monthly') {
+                btnMonthly.classList.add('active');
+                btnYearly.classList.remove('active');
+                document.getElementById('pageTitle').innerText = "Aylık Rapor";
+                document.getElementById('periodLabel').innerText = "Dönem:";
+            } else {
+                btnYearly.classList.add('active');
+                btnMonthly.classList.remove('active');
+                document.getElementById('pageTitle').innerText = "Yıllık Trend Analizi";
+                document.getElementById('periodLabel').innerText = "Yıl:";
+            }
+            
+            updateSelector();
+            fetchData();
+        }
+
+        function updateSelector() {
+            const sel = document.getElementById('periodSelector');
+            sel.innerHTML = '';
+            
+            const list = mode === 'monthly' ? periods : years;
+            
+            if (!list || list.length === 0) {
+                sel.add(new Option("Veri Yok", ""));
+                return;
+            }
+
+            list.forEach(item => sel.add(new Option(mode === 'monthly' ? item : `${item} Yılı`, item)));
+            
+            // İlk elemanı otomatik seç
+            sel.value = list[0];
+        }
+
+        async function fetchData() {
+            // Selector değeri yoksa ilk değeri almaya çalış (mod değişiminde)
+            let val = document.getElementById('periodSelector').value;
+            const list = mode === 'monthly' ? periods : years;
+            
+            if(!val && list.length > 0) {
+                val = list[0];
+            }
+            
+            if(!val) return;
+
+            const status = document.getElementById('lastUpdated');
+            status.innerText = "Güncelleniyor...";
+            
+            let url = `${APPSCRIPT_URL}?action=${mode === 'monthly' ? 'getDashboardData' : 'getAnnualStats'}`;
+            url += mode === 'monthly' ? `&sheetName=${encodeURIComponent(val)}` : `&year=${encodeURIComponent(val)}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.error) throw new Error(data.error);
+                render(data);
+                status.innerText = "Şimdi güncellendi";
+            } catch(e) { 
+                status.innerText = "Bağlantı Hatası"; 
+                console.error(e); 
+            }
+        }
+
+        function render(data) {
+            const fmt = (v) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits:0 }).format(v);
+            
+            document.getElementById('kpi-revenue').innerText = fmt(data.kpis.totalRevenue);
+            document.getElementById('kpi-basket').innerText = fmt(data.kpis.avgBasket);
+            
+            if(mode === 'monthly') {
+                // AYLIK GÖRÜNÜM
+                document.getElementById('kpi-sales').innerText = data.kpis.totalSales;
+                document.getElementById('kpi-calls').innerText = data.kpis.totalCalls;
+                document.getElementById('kpi-conversion').innerText = `%${data.kpis.conversionRate}`;
+
+                document.getElementById('chartCategoryTitle').innerText = "Kategori Bazlı Ciro";
+                document.getElementById('chartBranchTitle').innerText = "Şube Performansı";
+                
+                drawChart('chartCategory', 'bar', data.charts.category.map(i=>i.name), data.charts.category.map(i=>i.revenue), 'Kategori Cirosu', false);
+                drawDoughnut('chartMedia', data.charts.media);
+                drawChart('chartBranch', 'bar', data.charts.branch.map(i=>i.name), data.charts.branch.map(i=>i.revenue), 'Şube Cirosu', true);
+                renderHeatmap(data.charts.heatmap);
+
+            } else {
+                // YILLIK GÖRÜNÜM
+                document.getElementById('kpi-sales').innerText = data.kpis.totalSales; 
+                document.getElementById('kpi-calls').innerText = data.kpis.totalCalls || "-"; 
+                document.getElementById('kpi-conversion').innerText = `%${data.kpis.conversionRate || 0}`;
+
+                document.getElementById('chartCategoryTitle').innerText = "Yıllık Kategori Cirosu";
+                document.getElementById('chartBranchTitle').innerText = "Aylık Ciro Trendi";
+
+                // Kategori
+                if(data.categories) {
+                    drawChart('chartCategory', 'bar', data.categories.map(i=>i.name), data.categories.map(i=>i.revenue), 'Yıllık Ciro', false);
+                }
+                
+                // Medya
+                if(data.media) {
+                    drawDoughnut('chartMedia', data.media);
+                }
+
+                // Trend
+                if(data.trend) {
+                   drawChart('chartBranch', 'line', data.trend.map(i=>i.month), data.trend.map(i=>i.revenue), 'Aylık Ciro', false);
+                }
+
+                document.getElementById('heatmapContainer').innerHTML = '<div class="col-span-full text-center text-slate-400 py-10 flex flex-col items-center gap-2"><i class="fas fa-info-circle text-2xl text-slate-300"></i><span>Yıllık modda ısı haritası aktif değildir.</span></div>';
+            }
+        }
+
+        function renderHeatmap(data) {
+            const container = document.getElementById('heatmapContainer');
+            container.innerHTML = '';
+            
+            if(!data) return;
+
+            const maxVal = Math.max(...data.map(d => d.count), 1); 
+            
+            for (let i = 1; i <= 31; i++) {
+                const dayData = data.find(d => parseInt(d.day) === i);
+                const count = dayData ? dayData.count : 0;
+                
+                let heatLevel = 0;
+                if(count > 0) heatLevel = Math.ceil((count / maxVal) * 5);
+                
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell heat-${heatLevel}`;
+                cell.innerText = i;
+                cell.title = `${i}. Gün: ${count} Satış`;
+                
+                container.appendChild(cell);
+            }
+        }
+
+        function drawChart(id, type, labels, data, label, indexAxisY = false) {
+            const ctx = document.getElementById(id).getContext('2d');
+            if(charts[id]) charts[id].destroy();
+            
+            const gradient = ctx.createLinearGradient(0,0,0,400);
+            gradient.addColorStop(0, '#d946ef'); // Fuchsia 500
+            gradient.addColorStop(1, '#c026d3'); // Fuchsia 600
+
+            charts[id] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: type==='line' ? 'rgba(217, 70, 239, 0.1)' : gradient,
+                        borderColor: '#c026d3',
+                        borderWidth: type==='line' ? 3 : 0,
+                        fill: type==='line',
+                        tension: 0.4,
+                        borderRadius: 6,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#c026d3',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: indexAxisY ? 'y' : 'x',
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#ffffff', titleColor:'#1e293b', bodyColor:'#475569', padding:12, cornerRadius:12, borderColor:'#e2e8f0', borderWidth:1, displayColors:false } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color:'rgba(0,0,0,0.03)' }, ticks:{ color:'#64748b', font:{size:11} }, border:{display:false} },
+                        x: { grid: { display:false }, ticks:{ color:'#64748b', font:{size:11} }, border:{display:false} }
+                    }
+                }
+            });
+        }
+
+        function drawDoughnut(id, dataItems) {
+            const ctx = document.getElementById(id).getContext('2d');
+            if(charts[id]) charts[id].destroy();
+            
+            if(!dataItems || dataItems.length === 0) return;
+
+            const top5 = dataItems.slice(0,5);
+            const others = dataItems.slice(5).reduce((acc, curr) => acc + curr.revenue, 0);
+
+            // Light Vibrant Colors
+            const colors = ['#d946ef', '#ec4899', '#f43f5e', '#8b5cf6', '#6366f1', '#3b82f6'];
+
+            charts[id] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: top5.map(i=>i.name),
+                    datasets: [{
+                        data: top5.map(i=>i.revenue),
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '75%',
+                    plugins: { 
+                        legend: { position:'right', labels:{ color:'#475569', boxWidth:10, usePointStyle:true, padding:15, font:{size:11} } } 
+                    },
+                    layout: { padding: 10 }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
