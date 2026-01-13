@@ -10,10 +10,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Chart.js DataLabels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- HTML2PDF Library (PDF Çıktısı İçin) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -99,7 +101,7 @@
 <body class="flex h-screen overflow-hidden text-sm">
 
     <!-- Sidebar -->
-    <aside class="w-16 md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col transition-all duration-300 z-20 shadow-sm">
+    <aside class="w-16 md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col transition-all duration-300 z-20 shadow-sm" data-html2canvas-ignore="true">
         <div class="h-20 flex items-center justify-center md:justify-start px-6 border-b border-slate-100">
             <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight hidden md:block">
                 HEDEF AVM <span class="font-light text-fuchsia-600">RAPOR</span>
@@ -120,15 +122,15 @@
 
         <div class="p-4 border-t border-slate-100">
             <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
-                v4.0 &bull; Light
+                v4.2 &bull; PDF
             </div>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto relative flex flex-col bg-[#f8fafc]">
+    <main id="report-content" class="flex-1 overflow-y-auto relative flex flex-col bg-[#f8fafc]">
         <!-- Header -->
-        <header class="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-10 px-4 md:px-8 flex justify-between items-center shrink-0">
+        <header class="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-10 px-4 md:px-8 flex justify-between items-center shrink-0" data-html2canvas-ignore="true">
             <div>
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" id="pageTitle">Aylık Rapor</h2>
                 <div class="flex items-center gap-2 mt-1">
@@ -145,8 +147,13 @@
                     </select>
                     <i class="fas fa-chevron-down absolute right-3 top-3.5 text-slate-400 pointer-events-none group-hover:text-fuchsia-500 transition-colors"></i>
                 </div>
-                <button onclick="fetchData()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white p-2.5 rounded-xl transition-all shadow-lg shadow-fuchsia-600/20 active:scale-95">
+                
+                <button onclick="fetchData()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white p-2.5 rounded-xl transition-all shadow-lg shadow-fuchsia-600/20 active:scale-95" title="Yenile">
                     <i class="fas fa-sync-alt"></i>
+                </button>
+
+                <button onclick="exportToPDF()" class="bg-rose-500 hover:bg-rose-600 text-white p-2.5 rounded-xl transition-all shadow-lg shadow-rose-500/20 active:scale-95 flex items-center gap-2" title="PDF Olarak İndir">
+                    <i class="fas fa-file-pdf"></i> <span class="hidden md:inline text-xs font-bold">PDF</span>
                 </button>
             </div>
         </header>
@@ -165,7 +172,7 @@
                         <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </h3>
                     <!-- Trend Badge -->
-                    <div id="revenue-trend" class="mt-2 text-xs font-bold flex items-center gap-1 hidden">
+                    <div id="revenue-trend" class="mt-2 text-sm font-bold flex items-center gap-1 hidden">
                         <i class="fas fa-arrow-up"></i> <span>%0</span>
                     </div>
                 </div>
@@ -342,6 +349,37 @@
             sel.value = list[0];
         }
 
+        // --- PDF EXPORT FONKSİYONU ---
+        function exportToPDF() {
+            const element = document.getElementById('report-content');
+            
+            // PDF ayarları
+            const opt = {
+                margin:       [0.2, 0.2, 0.2, 0.2], // Kenar boşlukları (inç)
+                filename:     `Hedef_AVM_${mode === 'monthly' ? 'Aylik' : 'Yillik'}_Rapor_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } // Yatay A4
+            };
+
+            // Geçici stil değişiklikleri (Scrollbar'ı kaldır)
+            const originalOverflow = element.style.overflow;
+            element.style.overflow = 'visible'; 
+
+            // Butonu yükleniyor yap
+            const btn = document.querySelector('button[onclick="exportToPDF()"]');
+            const originalBtnContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Hazırlanıyor...';
+            btn.disabled = true;
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // İşlem bitince eski haline getir
+                element.style.overflow = originalOverflow;
+                btn.innerHTML = originalBtnContent;
+                btn.disabled = false;
+            });
+        }
+
         function showLoading() {
             const status = document.getElementById('lastUpdated');
             status.innerHTML = '<i class="fas fa-sync fa-spin text-amber-500"></i> <span class="text-amber-600">Veriler Güncelleniyor...</span>';
@@ -390,7 +428,7 @@
             if (data.kpis.trend !== undefined && data.kpis.trend !== null) {
                 trendEl.classList.remove('hidden');
                 const isPositive = data.kpis.trend >= 0;
-                trendEl.className = `mt-2 text-xs font-bold flex items-center gap-1 ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`;
+                trendEl.className = `mt-2 text-sm font-extrabold flex items-center gap-1 ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`;
                 trendEl.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> <span>Geçen aya göre %${Math.abs(data.kpis.trend)} ${isPositive ? 'artış' : 'azalış'}</span>`;
             } else {
                 trendEl.classList.add('hidden');
@@ -403,9 +441,10 @@
                 document.getElementById('chartCategoryTitle').innerText = "Kategori Bazlı Ciro";
                 document.getElementById('chartBranchTitle').innerText = "Şube Performansı";
                 
-                // Grafiklerde Veri Etiketlerini Aç (Datalabels)
+                // Grafiklerde Veri Etiketlerini Aç (Datalabels) - Belirgin Stil
                 const categoryLabels = {
-                    display: true, color: '#475569', align: 'end', anchor: 'end', font: {weight:'bold', size:10},
+                    display: true, color: '#1e293b', align: 'end', anchor: 'end', 
+                    font: {weight:'900', size:13, family:"'Outfit', sans-serif"},
                     formatter: (val, ctx) => {
                         let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                         return ((val/sum)*100).toFixed(1) + "%";
@@ -487,7 +526,8 @@
                         <div class="flex flex-col">
                             <span class="font-bold text-slate-700 text-sm">${item.name}</span>
                             <span class="text-[10px] text-slate-400 font-medium tracking-wide">
-                                ${item.count || 0} İşlem &bull; <span class="text-slate-500 font-bold">%${percentOfTotal}</span>
+                                ${item.count || 0} İşlem &bull; 
+                                <span class="text-xs text-slate-600 font-extrabold bg-slate-200 px-2 py-1 rounded-md">%${percentOfTotal}</span>
                             </span>
                         </div>
                     </div>
