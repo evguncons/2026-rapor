@@ -114,7 +114,7 @@
 
         <div class="p-4 border-t border-slate-100">
             <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
-                v3.5 &bull; Light
+                v3.6 &bull; Light
             </div>
         </div>
     </aside>
@@ -149,7 +149,7 @@
             
             <!-- KPI Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <!-- KPI Items (Same as before) -->
+                <!-- KPI Items -->
                 <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-emerald-500">
                     <div class="flex justify-between items-start mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Ciro</p>
@@ -210,7 +210,7 @@
                     <div class="flex-1 w-full relative"><canvas id="chartCategory"></canvas></div>
                 </div>
 
-                <!-- Müşteri Kaynağı (LİSTE - YENİ) -->
+                <!-- Müşteri Kaynağı (LİSTE - RENKLİ) -->
                 <div class="glass-card p-6 flex flex-col h-[450px]">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -220,7 +220,10 @@
                     </div>
                     <!-- Liste Container -->
                     <div id="mediaListContainer" class="flex flex-col gap-3 overflow-y-auto h-full pr-1 custom-scrollbar">
-                        <div class="text-center text-slate-400 py-10">Veri yükleniyor...</div>
+                        <div class="text-center text-slate-400 py-10 flex flex-col items-center gap-2">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                            <span>Veri yükleniyor...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -228,7 +231,7 @@
             <!-- Secondary Area: Heatmap & Branch -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
-                <!-- Isı Dağılımı (AYLIK & GÜNLÜK DESTEKLİ) -->
+                <!-- Isı Dağılımı (DÜZELTİLDİ: AYLIK/GÜNLÜK) -->
                 <div class="glass-card p-6 flex flex-col">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -389,7 +392,7 @@
                 document.getElementById('chartBranchTitle').innerText = "Şube Performansı";
                 
                 drawChart('chartCategory', 'bar', data.charts.category.map(i=>i.name), data.charts.category.map(i=>i.revenue), 'Kategori Cirosu', false);
-                renderMediaList(data.charts.media); // Liste Fonksiyonu
+                renderMediaList(data.charts.media);
                 drawChart('chartBranch', 'bar', data.charts.branch.map(i=>i.name), data.charts.branch.map(i=>i.revenue), 'Şube Cirosu', true);
                 renderHeatmap(data.charts.heatmap, 'day');
 
@@ -402,7 +405,7 @@
                 document.getElementById('chartBranchTitle').innerText = "Aylık Ciro Trendi";
 
                 if(data.categories) drawChart('chartCategory', 'bar', data.categories.map(i=>i.name), data.categories.map(i=>i.revenue), 'Yıllık Ciro', false);
-                if(data.media) renderMediaList(data.media); // Liste Fonksiyonu
+                if(data.media) renderMediaList(data.media);
                 if(data.trend) {
                    drawChart('chartBranch', 'line', data.trend.map(i=>i.month), data.trend.map(i=>i.revenue), 'Aylık Ciro', false);
                    // Trend verisini Heatmap formatına çevir (Ay isimleri -> 1-12)
@@ -413,7 +416,7 @@
             }
         }
 
-        // --- YENİ: MEDYA LİSTE GÖRÜNÜMÜ ---
+        // --- MEDYA LİSTESİ FONKSİYONU ---
         function renderMediaList(data) {
             const container = document.getElementById('mediaListContainer');
             container.innerHTML = '';
@@ -427,26 +430,47 @@
             data.sort((a,b) => b.revenue - a.revenue);
             const maxVal = data[0].revenue || 1;
 
-            data.forEach(item => {
+            // Farklı ve Canlı Renk Paleti
+            const colors = [
+                { bg: '#ef4444', text: '#ef4444' }, // Red
+                { bg: '#f97316', text: '#f97316' }, // Orange
+                { bg: '#f59e0b', text: '#f59e0b' }, // Amber
+                { bg: '#10b981', text: '#10b981' }, // Emerald
+                { bg: '#3b82f6', text: '#3b82f6' }, // Blue
+                { bg: '#8b5cf6', text: '#8b5cf6' }, // Violet
+                { bg: '#d946ef', text: '#d946ef' }, // Fuchsia
+                { bg: '#06b6d4', text: '#06b6d4' }  // Cyan
+            ];
+
+            data.forEach((item, index) => {
+                // "Diğer" etiketini "Çağrı" olarak değiştir
+                if (item.name === 'Diğer') item.name = 'Çağrı';
+
                 const percent = (item.revenue / maxVal) * 100;
                 const formattedRev = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(item.revenue);
                 
+                // Sıradaki rengi seç
+                const color = colors[index % colors.length];
+
                 // İkon belirleme
                 let icon = 'globe';
                 let nameLower = item.name.toLowerCase();
                 if(nameLower.includes('whatsapp')) icon = 'whatsapp';
                 else if(nameLower.includes('instagram')) icon = 'instagram';
                 else if(nameLower.includes('facebook')) icon = 'facebook';
-                else if(nameLower.includes('telefon') || nameLower.includes('arama')) icon = 'phone';
+                else if(nameLower.includes('telefon') || nameLower.includes('arama') || nameLower.includes('çağrı')) icon = 'phone';
                 else if(nameLower.includes('mağaza')) icon = 'store';
                 else if(nameLower.includes('referans')) icon = 'users';
 
                 const html = `
-                <div class="relative flex items-center justify-between p-3.5 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:border-fuchsia-200 group">
-                    <div class="absolute left-0 top-0 bottom-0 bg-fuchsia-50 rounded-xl transition-all duration-1000 ease-out" style="width: 0%;" data-width="${percent}%"></div>
+                <div class="relative flex items-center justify-between p-3.5 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:shadow-md group">
+                    <div class="absolute left-0 top-0 bottom-0 rounded-xl transition-all duration-1000 ease-out opacity-10" 
+                         style="width: 0%; background-color: ${color.bg};" 
+                         data-width="${percent}%"></div>
                     
                     <div class="relative z-10 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-fuchsia-600 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm border border-slate-50 group-hover:scale-110 transition-transform"
+                             style="color: ${color.text}; background-color: white;">
                             <i class="fab fa-${icon} text-lg"></i>
                         </div>
                         <div class="flex flex-col">
@@ -461,7 +485,6 @@
                 container.insertAdjacentHTML('beforeend', html);
             });
 
-            // Animasyon için küçük bir gecikme
             setTimeout(() => {
                 container.querySelectorAll('[data-width]').forEach(el => el.style.width = el.dataset.width);
             }, 100);
@@ -475,7 +498,7 @@
             if(!data) return;
 
             const maxVal = Math.max(...data.map(d => d.count), 1); 
-            const limit = type === 'day' ? 31 : 12; // Günlükse 31 gün, Aylıksa 12 ay
+            const limit = type === 'month' ? 12 : 31; // Dinamik limit (Aylık modda 12, Günlükte 31)
             
             for (let i = 1; i <= limit; i++) {
                 const itemData = data.find(d => parseInt(d.day) === i);
@@ -488,8 +511,7 @@
                 cell.className = `heatmap-cell heat-${heatLevel}`;
                 cell.innerText = i;
                 
-                // Tooltip
-                const label = type === 'day' ? `${i}. Gün` : `${i}. Ay`;
+                const label = type === 'month' ? `${i}. Ay` : `${i}. Gün`;
                 cell.title = `${label}: ${count} Satış`;
                 
                 container.appendChild(cell);
