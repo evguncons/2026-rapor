@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js DataLabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -19,7 +21,7 @@
                 extend: {
                     fontFamily: { sans: ['Outfit', 'sans-serif'] },
                     colors: {
-                        brand: { 500: '#d946ef', 600: '#c026d3' } // Magenta/Fuchsia
+                        brand: { 500: '#d946ef', 600: '#c026d3' }
                     }
                 }
             }
@@ -37,7 +39,7 @@
         }
         .glass-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(192, 38, 211, 0.15); /* Magenta Shadow */
+            box-shadow: 0 10px 25px -5px rgba(192, 38, 211, 0.15);
             border-color: #f0abfc;
         }
         
@@ -61,7 +63,7 @@
         }
         .heatmap-cell:hover { transform: scale(1.15); z-index: 10; color: white; background-color: #c026d3 !important; }
         
-        /* Magenta Isı Renkleri */
+        /* Isı Haritası Renkleri */
         .heat-0 { background-color: #f1f5f9; color: #cbd5e1; }
         .heat-1 { background-color: #fae8ff; color: #a21caf; }
         .heat-2 { background-color: #f5d0fe; color: #a21caf; }
@@ -75,10 +77,9 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Nav Button Active State */
         .nav-btn.active {
             background: linear-gradient(90deg, rgba(217, 70, 239, 0.1) 0%, rgba(217, 70, 239, 0) 100%);
-            border-left: 4px solid #d946ef; /* Magenta */
+            border-left: 4px solid #d946ef;
             color: #c026d3;
             font-weight: 600;
         }
@@ -113,7 +114,7 @@
 
         <div class="p-4 border-t border-slate-100">
             <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
-                v3.3 &bull; Light
+                v3.5 &bull; Light
             </div>
         </div>
     </aside>
@@ -148,7 +149,7 @@
             
             <!-- KPI Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <!-- Ciro -->
+                <!-- KPI Items (Same as before) -->
                 <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-emerald-500">
                     <div class="flex justify-between items-start mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Ciro</p>
@@ -158,8 +159,6 @@
                         <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </h3>
                 </div>
-
-                <!-- Satış -->
                 <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-blue-500">
                     <div class="flex justify-between items-start mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Satış</p>
@@ -169,8 +168,6 @@
                         <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </h3>
                 </div>
-
-                <!-- Çağrı -->
                 <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-violet-500">
                     <div class="flex justify-between items-start mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Çağrı</p>
@@ -180,8 +177,6 @@
                         <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </h3>
                 </div>
-
-                <!-- Dönüşüm -->
                 <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-amber-500">
                     <div class="flex justify-between items-start mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Dönüşüm</p>
@@ -191,8 +186,6 @@
                         <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </h3>
                 </div>
-
-                <!-- Sepet -->
                 <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-rose-500">
                     <div class="flex justify-between items-start mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Ort. Sepet</p>
@@ -207,7 +200,7 @@
             <!-- Main Charts Area -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Kategori Analizi (Bar) -->
-                <div class="glass-card p-6 lg:col-span-2 flex flex-col h-[420px]">
+                <div class="glass-card p-6 lg:col-span-2 flex flex-col h-[450px]">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <span class="w-1.5 h-6 bg-fuchsia-600 rounded-full"></span>
@@ -217,16 +210,17 @@
                     <div class="flex-1 w-full relative"><canvas id="chartCategory"></canvas></div>
                 </div>
 
-                <!-- Kaynak Analizi (Doughnut) -->
-                <div class="glass-card p-6 flex flex-col h-[420px]">
-                    <div class="flex justify-between items-center mb-6">
+                <!-- Müşteri Kaynağı (LİSTE - YENİ) -->
+                <div class="glass-card p-6 flex flex-col h-[450px]">
+                    <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <span class="w-1.5 h-6 bg-pink-500 rounded-full"></span>
                             <span>Müşteri Kaynağı</span>
                         </h3>
                     </div>
-                    <div class="flex-1 w-full relative flex justify-center items-center">
-                        <canvas id="chartMedia"></canvas>
+                    <!-- Liste Container -->
+                    <div id="mediaListContainer" class="flex flex-col gap-3 overflow-y-auto h-full pr-1 custom-scrollbar">
+                        <div class="text-center text-slate-400 py-10">Veri yükleniyor...</div>
                     </div>
                 </div>
             </div>
@@ -234,15 +228,16 @@
             <!-- Secondary Area: Heatmap & Branch -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
-                <!-- Isı Dağılımı -->
+                <!-- Isı Dağılımı (AYLIK & GÜNLÜK DESTEKLİ) -->
                 <div class="glass-card p-6 flex flex-col">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <span class="w-1.5 h-6 bg-amber-500 rounded-full"></span>
                             <span>Satış Yoğunluğu</span>
                         </h3>
-                        <span class="text-[10px] uppercase tracking-wider bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold">Günlük</span>
+                        <span id="heatmapLabel" class="text-[10px] uppercase tracking-wider bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold">Günlük</span>
                     </div>
+                    <!-- Heatmap Grid -->
                     <div class="heatmap-grid" id="heatmapContainer">
                         <div class="text-slate-400 text-sm col-span-full text-center py-10 flex flex-col items-center gap-2">
                             <i class="fas fa-circle-notch fa-spin text-fuchsia-400 text-xl"></i>
@@ -291,7 +286,8 @@
             if(!APPSCRIPT_URL) alert("Lütfen APPSCRIPT_URL ekleyin!");
             Chart.defaults.font.family = "'Outfit', sans-serif";
             Chart.defaults.color = '#64748b'; 
-            
+            Chart.register(ChartDataLabels);
+
             document.getElementById('periodSelector').addEventListener('change', fetchData);
 
             try {
@@ -319,10 +315,12 @@
                 btnMonthly.classList.add('active');
                 btnYearly.classList.remove('active');
                 document.getElementById('pageTitle').innerText = "Aylık Rapor";
+                document.getElementById('heatmapLabel').innerText = "GÜNLÜK";
             } else {
                 btnYearly.classList.add('active');
                 btnMonthly.classList.remove('active');
                 document.getElementById('pageTitle').innerText = "Yıllık Trend Analizi";
+                document.getElementById('heatmapLabel').innerText = "AYLIK";
             }
             
             updateSelector();
@@ -341,8 +339,6 @@
             }
 
             list.forEach(item => sel.add(new Option(mode === 'monthly' ? item : `${item} Yılı`, item)));
-            
-            // İlk elemanı otomatik seç
             sel.value = list[0];
         }
 
@@ -352,20 +348,12 @@
             
             if(!val) return;
 
-            // LOADING STATE UI START
             status.innerHTML = '<i class="fas fa-sync fa-spin text-amber-500"></i> <span class="text-amber-600">Veriler Güncelleniyor...</span>';
             status.className = "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-amber-50 border border-amber-200 shadow-sm";
             
-            // KPI Loading Spinner
+            // Spinners
             const spinner = '<span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>';
-            document.getElementById('kpi-revenue').innerHTML = spinner;
-            document.getElementById('kpi-sales').innerHTML = spinner;
-            document.getElementById('kpi-calls').innerHTML = spinner;
-            document.getElementById('kpi-conversion').innerHTML = spinner;
-            document.getElementById('kpi-basket').innerHTML = spinner;
-
-            // Heatmap Loading
-            document.getElementById('heatmapContainer').innerHTML = '<div class="col-span-full text-center text-slate-400 py-10 flex flex-col items-center gap-2"><i class="fas fa-circle-notch fa-spin text-fuchsia-400 text-xl"></i><span>Veriler işleniyor...</span></div>';
+            ['kpi-revenue', 'kpi-sales', 'kpi-calls', 'kpi-conversion', 'kpi-basket'].forEach(id => document.getElementById(id).innerHTML = spinner);
             
             let url = `${APPSCRIPT_URL}?action=${mode === 'monthly' ? 'getDashboardData' : 'getAnnualStats'}`;
             url += mode === 'monthly' ? `&sheetName=${encodeURIComponent(val)}` : `&year=${encodeURIComponent(val)}`;
@@ -376,7 +364,6 @@
                 if(data.error) throw new Error(data.error);
                 render(data);
                 
-                // SUCCESS STATE
                 status.innerHTML = '<i class="fas fa-check-circle text-emerald-500"></i> <span class="text-emerald-600">Veriler Güncel</span>';
                 status.className = "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-emerald-50 border border-emerald-200 shadow-sm";
                 
@@ -402,9 +389,9 @@
                 document.getElementById('chartBranchTitle').innerText = "Şube Performansı";
                 
                 drawChart('chartCategory', 'bar', data.charts.category.map(i=>i.name), data.charts.category.map(i=>i.revenue), 'Kategori Cirosu', false);
-                drawDoughnut('chartMedia', data.charts.media);
+                renderMediaList(data.charts.media); // Liste Fonksiyonu
                 drawChart('chartBranch', 'bar', data.charts.branch.map(i=>i.name), data.charts.branch.map(i=>i.revenue), 'Şube Cirosu', true);
-                renderHeatmap(data.charts.heatmap);
+                renderHeatmap(data.charts.heatmap, 'day');
 
             } else {
                 document.getElementById('kpi-sales').innerText = data.kpis.totalSales; 
@@ -414,36 +401,85 @@
                 document.getElementById('chartCategoryTitle').innerText = "Yıllık Kategori Cirosu";
                 document.getElementById('chartBranchTitle').innerText = "Aylık Ciro Trendi";
 
-                // Kategori
-                if(data.categories) {
-                    drawChart('chartCategory', 'bar', data.categories.map(i=>i.name), data.categories.map(i=>i.revenue), 'Yıllık Ciro', false);
-                }
-                
-                // Medya
-                if(data.media) {
-                    drawDoughnut('chartMedia', data.media);
-                }
-
-                // Trend
+                if(data.categories) drawChart('chartCategory', 'bar', data.categories.map(i=>i.name), data.categories.map(i=>i.revenue), 'Yıllık Ciro', false);
+                if(data.media) renderMediaList(data.media); // Liste Fonksiyonu
                 if(data.trend) {
                    drawChart('chartBranch', 'line', data.trend.map(i=>i.month), data.trend.map(i=>i.revenue), 'Aylık Ciro', false);
+                   // Trend verisini Heatmap formatına çevir (Ay isimleri -> 1-12)
+                   const monthMap = {'OCAK':1, 'ŞUBAT':2, 'MART':3, 'NİSAN':4, 'MAYIS':5, 'HAZİRAN':6, 'TEMMUZ':7, 'AĞUSTOS':8, 'EYLÜL':9, 'EKİM':10, 'KASIM':11, 'ARALIK':12};
+                   const heatData = data.trend.map(t => ({ day: monthMap[t.month.toUpperCase()], count: t.sales }));
+                   renderHeatmap(heatData, 'month');
                 }
-
-                document.getElementById('heatmapContainer').innerHTML = '<div class="col-span-full text-center text-slate-400 py-10 flex flex-col items-center gap-2"><i class="fas fa-info-circle text-2xl text-slate-300"></i><span>Yıllık modda ısı haritası aktif değildir.</span></div>';
             }
         }
 
-        function renderHeatmap(data) {
+        // --- YENİ: MEDYA LİSTE GÖRÜNÜMÜ ---
+        function renderMediaList(data) {
+            const container = document.getElementById('mediaListContainer');
+            container.innerHTML = '';
+            
+            if(!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-10">Veri bulunamadı</div>';
+                return;
+            }
+
+            // Ciroya göre sırala
+            data.sort((a,b) => b.revenue - a.revenue);
+            const maxVal = data[0].revenue || 1;
+
+            data.forEach(item => {
+                const percent = (item.revenue / maxVal) * 100;
+                const formattedRev = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(item.revenue);
+                
+                // İkon belirleme
+                let icon = 'globe';
+                let nameLower = item.name.toLowerCase();
+                if(nameLower.includes('whatsapp')) icon = 'whatsapp';
+                else if(nameLower.includes('instagram')) icon = 'instagram';
+                else if(nameLower.includes('facebook')) icon = 'facebook';
+                else if(nameLower.includes('telefon') || nameLower.includes('arama')) icon = 'phone';
+                else if(nameLower.includes('mağaza')) icon = 'store';
+                else if(nameLower.includes('referans')) icon = 'users';
+
+                const html = `
+                <div class="relative flex items-center justify-between p-3.5 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:border-fuchsia-200 group">
+                    <div class="absolute left-0 top-0 bottom-0 bg-fuchsia-50 rounded-xl transition-all duration-1000 ease-out" style="width: 0%;" data-width="${percent}%"></div>
+                    
+                    <div class="relative z-10 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-fuchsia-600 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                            <i class="fab fa-${icon} text-lg"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-700 text-sm">${item.name}</span>
+                            <span class="text-[10px] text-slate-400 font-medium tracking-wide">${item.count || 0} İşlem</span>
+                        </div>
+                    </div>
+                    
+                    <span class="relative z-10 font-bold text-slate-800 text-sm">${formattedRev}</span>
+                </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+
+            // Animasyon için küçük bir gecikme
+            setTimeout(() => {
+                container.querySelectorAll('[data-width]').forEach(el => el.style.width = el.dataset.width);
+            }, 100);
+        }
+
+        // --- GÜNCELLENMİŞ: ISI HARİTASI (AYLIK VE GÜNLÜK) ---
+        function renderHeatmap(data, type) {
             const container = document.getElementById('heatmapContainer');
             container.innerHTML = '';
             
             if(!data) return;
 
             const maxVal = Math.max(...data.map(d => d.count), 1); 
+            const limit = type === 'day' ? 31 : 12; // Günlükse 31 gün, Aylıksa 12 ay
             
-            for (let i = 1; i <= 31; i++) {
-                const dayData = data.find(d => parseInt(d.day) === i);
-                const count = dayData ? dayData.count : 0;
+            for (let i = 1; i <= limit; i++) {
+                const itemData = data.find(d => parseInt(d.day) === i);
+                const count = itemData ? itemData.count : 0;
                 
                 let heatLevel = 0;
                 if(count > 0) heatLevel = Math.ceil((count / maxVal) * 5);
@@ -451,7 +487,10 @@
                 const cell = document.createElement('div');
                 cell.className = `heatmap-cell heat-${heatLevel}`;
                 cell.innerText = i;
-                cell.title = `${i}. Gün: ${count} Satış`;
+                
+                // Tooltip
+                const label = type === 'day' ? `${i}. Gün` : `${i}. Ay`;
+                cell.title = `${label}: ${count} Satış`;
                 
                 container.appendChild(cell);
             }
@@ -488,43 +527,15 @@
                 options: {
                     indexAxis: indexAxisY ? 'y' : 'x',
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#ffffff', titleColor:'#1e293b', bodyColor:'#475569', padding:12, cornerRadius:12, borderColor:'#e2e8f0', borderWidth:1, displayColors:false } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { display: false },
+                        tooltip: { backgroundColor: '#ffffff', titleColor:'#1e293b', bodyColor:'#475569', padding:12, cornerRadius:12, borderColor:'#e2e8f0', borderWidth:1, displayColors:false } 
+                    },
                     scales: { 
                         y: { beginAtZero: true, grid: { color:'rgba(0,0,0,0.03)' }, ticks:{ color:'#64748b', font:{size:11} }, border:{display:false} },
                         x: { grid: { display:false }, ticks:{ color:'#64748b', font:{size:11} }, border:{display:false} }
                     }
-                }
-            });
-        }
-
-        function drawDoughnut(id, dataItems) {
-            const ctx = document.getElementById(id).getContext('2d');
-            if(charts[id]) charts[id].destroy();
-            
-            if(!dataItems || dataItems.length === 0) return;
-
-            const top5 = dataItems.slice(0,5);
-            const others = dataItems.slice(5).reduce((acc, curr) => acc + curr.revenue, 0);
-
-            const colors = ['#d946ef', '#ec4899', '#f43f5e', '#8b5cf6', '#6366f1', '#3b82f6'];
-
-            charts[id] = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: top5.map(i=>i.name),
-                    datasets: [{
-                        data: top5.map(i=>i.revenue),
-                        backgroundColor: colors,
-                        borderWidth: 0,
-                        hoverOffset: 10
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '75%',
-                    plugins: { 
-                        legend: { position:'right', labels:{ color:'#475569', boxWidth:10, usePointStyle:true, padding:15, font:{size:11} } } 
-                    },
-                    layout: { padding: 10 }
                 }
             });
         }
