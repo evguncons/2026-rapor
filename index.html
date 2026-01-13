@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hedef AVM Rapor</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Chart.js DataLabels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <!-- HTML2PDF Library (PDF Çıktısı İçin) -->
+    <!-- HTML2PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,47 +23,47 @@
                 extend: {
                     fontFamily: { sans: ['Outfit', 'sans-serif'] },
                     colors: {
-                        brand: { 500: '#d946ef', 600: '#c026d3' } // Magenta
+                        brand: { 500: '#d946ef', 600: '#c026d3' }
                     }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #f8fafc; color: #1e293b; }
+        body { background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
         
         .glass-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 1.25rem;
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .glass-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(192, 38, 211, 0.15);
-            border-color: #f0abfc;
+        @media (min-width: 768px) {
+            .glass-card { border-radius: 1.25rem; }
+            .glass-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -5px rgba(192, 38, 211, 0.15);
+                border-color: #f0abfc;
+            }
         }
         
         .heatmap-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
-            gap: 6px;
+            grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));
+            gap: 4px;
         }
         .heatmap-cell {
             aspect-ratio: 1;
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: #64748b;
-            transition: all 0.2s ease;
-            cursor: default;
             background-color: #f1f5f9;
         }
-        .heatmap-cell:hover { transform: scale(1.15); z-index: 10; color: white; background-color: #c026d3 !important; }
         
         /* Isı Renkleri */
         .heat-0 { background-color: #f1f5f9; color: #cbd5e1; }
@@ -71,7 +71,7 @@
         .heat-2 { background-color: #f5d0fe; color: #a21caf; }
         .heat-3 { background-color: #e879f9; color: white; }
         .heat-4 { background-color: #d946ef; color: white; }
-        .heat-5 { background-color: #c026d3; color: white; box-shadow: 0 0 10px rgba(192, 38, 211, 0.4); }
+        .heat-5 { background-color: #c026d3; color: white; }
 
         /* Skeleton */
         .skeleton {
@@ -83,10 +83,10 @@
         }
         @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #f8fafc; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 
         .nav-btn.active {
             background: linear-gradient(90deg, rgba(217, 70, 239, 0.1) 0%, rgba(217, 70, 239, 0) 100%);
@@ -95,160 +95,181 @@
             font-weight: 600;
         }
         .nav-btn { border-left: 4px solid transparent; color: #64748b; }
-        .nav-btn:hover { color: #c026d3; background-color: #fdf4ff; }
+        
+        /* Mobile Overlay */
+        #mobile-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
 
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden glass-effect" onclick="toggleSidebar()"></div>
+
     <!-- Sidebar -->
-    <aside class="w-16 md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col transition-all duration-300 z-20 shadow-sm" data-html2canvas-ignore="true">
-        <div class="h-20 flex items-center justify-center md:justify-start px-6 border-b border-slate-100">
-            <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight hidden md:block">
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col transform -translate-x-full md:translate-x-0 sidebar-transition shadow-2xl md:shadow-none h-full" data-html2canvas-ignore="true">
+        <div class="h-16 md:h-20 flex items-center justify-between px-6 border-b border-slate-100">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
                 HEDEF AVM <span class="font-light text-fuchsia-600">RAPOR</span>
             </h1>
-            <span class="md:hidden text-fuchsia-600 font-bold text-xl">H</span>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         
         <nav class="flex-1 py-6 space-y-1">
-            <button onclick="setMode('monthly')" id="nav-monthly" class="nav-btn active w-full flex items-center justify-center md:justify-start gap-4 px-6 py-3.5 transition-all group">
-                <i class="fas fa-chart-pie w-5 text-center transition-transform group-hover:scale-110"></i> 
-                <span class="hidden md:block">Genel Bakış</span>
+            <button onclick="setMode('monthly'); toggleSidebar()" id="nav-monthly" class="nav-btn active w-full flex items-center justify-start gap-4 px-6 py-3.5 transition-all group">
+                <i class="fas fa-chart-pie w-5 text-center"></i> 
+                <span class="font-medium">Genel Bakış</span>
             </button>
-            <button onclick="setMode('yearly')" id="nav-yearly" class="nav-btn w-full flex items-center justify-center md:justify-start gap-4 px-6 py-3.5 transition-all group">
-                <i class="fas fa-chart-line w-5 text-center transition-transform group-hover:scale-110"></i> 
-                <span class="hidden md:block">Yıllık Trend</span>
+            <button onclick="setMode('yearly'); toggleSidebar()" id="nav-yearly" class="nav-btn w-full flex items-center justify-start gap-4 px-6 py-3.5 transition-all group">
+                <i class="fas fa-chart-line w-5 text-center"></i> 
+                <span class="font-medium">Yıllık Trend</span>
             </button>
         </nav>
 
         <div class="p-4 border-t border-slate-100">
             <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
-                v4.2 &bull; PDF
+                v4.3 &bull; Mobil Uyumlu
             </div>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main id="report-content" class="flex-1 overflow-y-auto relative flex flex-col bg-[#f8fafc]">
+    <main id="report-content" class="flex-1 overflow-y-auto relative flex flex-col bg-[#f8fafc] w-full">
         <!-- Header -->
-        <header class="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-10 px-4 md:px-8 flex justify-between items-center shrink-0" data-html2canvas-ignore="true">
-            <div>
-                <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" id="pageTitle">Aylık Rapor</h2>
-                <div class="flex items-center gap-2 mt-1">
-                    <div id="lastUpdated" class="flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-amber-50 border border-amber-200 shadow-sm">
-                        <i class="fas fa-sync fa-spin text-amber-500"></i> <span class="text-amber-600">Başlatılıyor...</span>
+        <header class="h-16 md:h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-10 px-4 md:px-8 flex justify-between items-center shrink-0" data-html2canvas-ignore="true">
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu Button -->
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-500 hover:text-slate-800 p-2 -ml-2">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                
+                <div>
+                    <h2 class="text-lg md:text-2xl font-bold text-slate-800 tracking-tight leading-tight" id="pageTitle">Aylık Rapor</h2>
+                    <div id="lastUpdatedContainer" class="hidden md:block mt-1">
+                        <div id="lastUpdated" class="flex items-center gap-2 text-[10px] md:text-xs font-bold px-2 md:px-3 py-0.5 md:py-1 rounded-full transition-all bg-amber-50 border border-amber-200 shadow-sm w-fit">
+                            <i class="fas fa-sync fa-spin text-amber-500"></i> <span class="text-amber-600">Başlatılıyor...</span>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 md:gap-3">
                 <div class="relative group">
-                    <select id="periodSelector" class="bg-white text-slate-700 text-sm rounded-xl pl-4 pr-10 py-2.5 border border-slate-200 focus:outline-none focus:border-fuchsia-500 cursor-pointer appearance-none shadow-sm transition-all hover:border-fuchsia-300">
+                    <select id="periodSelector" class="bg-white text-slate-700 text-xs md:text-sm rounded-lg md:rounded-xl pl-3 md:pl-4 pr-8 md:pr-10 py-2 md:py-2.5 border border-slate-200 focus:outline-none focus:border-fuchsia-500 cursor-pointer appearance-none shadow-sm transition-all hover:border-fuchsia-300 max-w-[120px] md:max-w-none truncate">
                         <option>Yükleniyor...</option>
                     </select>
-                    <i class="fas fa-chevron-down absolute right-3 top-3.5 text-slate-400 pointer-events-none group-hover:text-fuchsia-500 transition-colors"></i>
+                    <i class="fas fa-chevron-down absolute right-2 md:right-3 top-2.5 md:top-3.5 text-xs text-slate-400 pointer-events-none group-hover:text-fuchsia-500 transition-colors"></i>
                 </div>
                 
-                <button onclick="fetchData()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white p-2.5 rounded-xl transition-all shadow-lg shadow-fuchsia-600/20 active:scale-95" title="Yenile">
-                    <i class="fas fa-sync-alt"></i>
+                <button onclick="fetchData()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white p-2 md:p-2.5 rounded-lg md:rounded-xl transition-all shadow-lg shadow-fuchsia-600/20 active:scale-95" title="Yenile">
+                    <i class="fas fa-sync-alt text-xs md:text-sm"></i>
                 </button>
 
-                <button onclick="exportToPDF()" class="bg-rose-500 hover:bg-rose-600 text-white p-2.5 rounded-xl transition-all shadow-lg shadow-rose-500/20 active:scale-95 flex items-center gap-2" title="PDF Olarak İndir">
-                    <i class="fas fa-file-pdf"></i> <span class="hidden md:inline text-xs font-bold">PDF</span>
+                <button onclick="exportToPDF()" class="bg-rose-500 hover:bg-rose-600 text-white p-2 md:p-2.5 rounded-lg md:rounded-xl transition-all shadow-lg shadow-rose-500/20 active:scale-95 flex items-center gap-2" title="PDF İndir">
+                    <i class="fas fa-file-pdf text-xs md:text-sm"></i> <span class="hidden md:inline text-xs font-bold">PDF</span>
                 </button>
             </div>
         </header>
 
-        <div class="p-4 md:p-8 space-y-6 flex-1 overflow-y-auto max-w-[1920px] mx-auto w-full">
+        <!-- Mobile Last Updated (Header altına taşındı for mobile) -->
+        <div class="md:hidden px-4 pt-3 pb-0">
+             <div id="lastUpdatedMobile" class="flex items-center gap-2 text-[10px] font-bold px-2 py-1 rounded-full transition-all bg-amber-50 border border-amber-200 shadow-sm w-fit">
+                <i class="fas fa-sync fa-spin text-amber-500"></i> <span class="text-amber-600">Başlatılıyor...</span>
+            </div>
+        </div>
+
+        <div class="p-4 md:p-8 space-y-4 md:space-y-6 flex-1 overflow-y-auto w-full">
             
             <!-- KPI Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <!-- Ciro (TRENDLİ) -->
-                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-emerald-500">
-                    <div class="flex justify-between items-start mb-2">
-                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Ciro</p>
-                        <i class="fas fa-wallet text-emerald-500 bg-emerald-50 p-2 rounded-lg"></i>
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+                <!-- Ciro (Full Width on Mobile) -->
+                <div class="glass-card p-4 md:p-5 relative overflow-hidden group border-l-4 border-l-emerald-500 col-span-2 lg:col-span-1">
+                    <div class="flex justify-between items-start mb-1 md:mb-2">
+                        <p class="text-slate-500 text-[10px] md:text-xs font-bold uppercase tracking-wider">Toplam Ciro</p>
+                        <i class="fas fa-wallet text-emerald-500 bg-emerald-50 p-1.5 md:p-2 rounded-lg text-xs md:text-base"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight transition-all kpi-value" id="kpi-revenue">
+                    <h3 class="text-xl md:text-3xl font-extrabold text-slate-800 tracking-tight transition-all kpi-value" id="kpi-revenue">
                         <span class="text-slate-300 text-lg"><i class="fas fa-circle-notch fa-spin"></i></span>
                     </h3>
-                    <!-- Trend Badge -->
-                    <div id="revenue-trend" class="mt-2 text-sm font-bold flex items-center gap-1 hidden">
+                    <div id="revenue-trend" class="mt-1 md:mt-2 text-xs font-bold flex items-center gap-1 hidden">
                         <i class="fas fa-arrow-up"></i> <span>%0</span>
                     </div>
                 </div>
 
-                <!-- Satış -->
-                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-blue-500">
-                    <div class="flex justify-between items-start mb-2">
-                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Satış</p>
-                        <i class="fas fa-shopping-bag text-blue-500 bg-blue-50 p-2 rounded-lg"></i>
+                <!-- Diğer KPI'lar -->
+                <div class="glass-card p-4 md:p-5 relative overflow-hidden group border-l-4 border-l-blue-500">
+                    <div class="flex justify-between items-start mb-1 md:mb-2">
+                        <p class="text-slate-500 text-[10px] md:text-xs font-bold uppercase tracking-wider">Satış</p>
+                        <i class="fas fa-shopping-bag text-blue-500 bg-blue-50 p-1.5 md:p-2 rounded-lg text-xs md:text-base"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-sales">0</h3>
+                    <h3 class="text-lg md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-sales">0</h3>
                 </div>
 
-                <!-- Çağrı -->
-                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-violet-500">
-                    <div class="flex justify-between items-start mb-2">
-                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Toplam Çağrı</p>
-                        <i class="fas fa-phone-alt text-violet-500 bg-violet-50 p-2 rounded-lg"></i>
+                <div class="glass-card p-4 md:p-5 relative overflow-hidden group border-l-4 border-l-violet-500">
+                    <div class="flex justify-between items-start mb-1 md:mb-2">
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Çağrı</p>
+                        <i class="fas fa-phone-alt text-violet-500 bg-violet-50 p-1.5 md:p-2 rounded-lg text-xs md:text-base"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-calls">0</h3>
+                    <h3 class="text-lg md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-calls">0</h3>
                 </div>
 
-                <!-- Dönüşüm -->
-                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-amber-500">
-                    <div class="flex justify-between items-start mb-2">
+                <div class="glass-card p-4 md:p-5 relative overflow-hidden group border-l-4 border-l-amber-500">
+                    <div class="flex justify-between items-start mb-1 md:mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Dönüşüm</p>
-                        <i class="fas fa-percent text-amber-500 bg-amber-50 p-2 rounded-lg"></i>
+                        <i class="fas fa-percent text-amber-500 bg-amber-50 p-1.5 md:p-2 rounded-lg text-xs md:text-base"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-conversion">%0</h3>
+                    <h3 class="text-lg md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-conversion">%0</h3>
                 </div>
 
-                <!-- Sepet -->
-                <div class="glass-card p-5 relative overflow-hidden group border-l-4 border-l-rose-500">
-                    <div class="flex justify-between items-start mb-2">
+                <div class="glass-card p-4 md:p-5 relative overflow-hidden group border-l-4 border-l-rose-500 col-span-2 sm:col-span-1">
+                    <div class="flex justify-between items-start mb-1 md:mb-2">
                         <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Ort. Sepet</p>
-                        <i class="fas fa-tag text-rose-500 bg-rose-50 p-2 rounded-lg"></i>
+                        <i class="fas fa-tag text-rose-500 bg-rose-50 p-1.5 md:p-2 rounded-lg text-xs md:text-base"></i>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-basket">₺0</h3>
+                    <h3 class="text-xl md:text-3xl font-extrabold text-slate-800 tracking-tight kpi-value" id="kpi-basket">₺0</h3>
                 </div>
             </div>
 
             <!-- Main Charts Area -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Kategori Analizi (Bar) -->
-                <div class="glass-card p-6 lg:col-span-2 flex flex-col h-[450px] chart-card">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span class="w-1.5 h-6 bg-fuchsia-600 rounded-full"></span>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                <!-- Kategori Analizi -->
+                <div class="glass-card p-4 md:p-6 lg:col-span-2 flex flex-col h-[350px] md:h-[450px] chart-card">
+                    <div class="flex justify-between items-center mb-4 md:mb-6">
+                        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-5 md:h-6 bg-fuchsia-600 rounded-full"></span>
                             <span id="chartCategoryTitle">Kategori Bazlı Ciro</span>
                         </h3>
                     </div>
                     <div class="flex-1 w-full relative"><canvas id="chartCategory"></canvas></div>
                 </div>
 
-                <!-- Müşteri Kaynağı (LİSTE) -->
-                <div class="glass-card p-6 flex flex-col h-[450px] chart-card">
+                <!-- Müşteri Kaynağı -->
+                <div class="glass-card p-4 md:p-6 flex flex-col h-[350px] md:h-[450px] chart-card">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span class="w-1.5 h-6 bg-pink-500 rounded-full"></span>
+                        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-5 md:h-6 bg-pink-500 rounded-full"></span>
                             <span>Müşteri Kaynağı</span>
                         </h3>
                     </div>
-                    <!-- Liste Container -->
-                    <div id="mediaListContainer" class="flex flex-col gap-3 overflow-y-auto h-full pr-1 custom-scrollbar">
+                    <div id="mediaListContainer" class="flex flex-col gap-2 md:gap-3 overflow-y-auto h-full pr-1 custom-scrollbar">
                         <!-- JS ile dolacak -->
                     </div>
                 </div>
             </div>
 
             <!-- Secondary Area -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 <!-- Isı Dağılımı -->
-                <div class="glass-card p-6 flex flex-col chart-card">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span class="w-1.5 h-6 bg-amber-500 rounded-full"></span>
+                <div class="glass-card p-4 md:p-6 flex flex-col chart-card">
+                    <div class="flex justify-between items-center mb-4 md:mb-6">
+                        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-5 md:h-6 bg-amber-500 rounded-full"></span>
                             <span>Satış Yoğunluğu</span>
                         </h3>
                         <span id="heatmapLabel" class="text-[10px] uppercase tracking-wider bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold">Günlük</span>
@@ -258,23 +279,23 @@
                             <i class="fas fa-circle-notch fa-spin text-fuchsia-400 text-2xl"></i>
                         </div>
                     </div>
-                    <div class="flex justify-between items-center mt-6 text-xs text-slate-500 font-medium">
+                    <div class="flex justify-between items-center mt-4 md:mt-6 text-xs text-slate-500 font-medium">
                         <span>Düşük</span>
                         <div class="flex gap-1">
-                            <div class="w-4 h-1.5 bg-fuchsia-100 rounded-full"></div>
-                            <div class="w-4 h-1.5 bg-fuchsia-300 rounded-full"></div>
-                            <div class="w-4 h-1.5 bg-fuchsia-500 rounded-full"></div>
-                            <div class="w-4 h-1.5 bg-fuchsia-700 rounded-full"></div>
+                            <div class="w-3 md:w-4 h-1.5 bg-fuchsia-100 rounded-full"></div>
+                            <div class="w-3 md:w-4 h-1.5 bg-fuchsia-300 rounded-full"></div>
+                            <div class="w-3 md:w-4 h-1.5 bg-fuchsia-500 rounded-full"></div>
+                            <div class="w-3 md:w-4 h-1.5 bg-fuchsia-700 rounded-full"></div>
                         </div>
                         <span>Yüksek</span>
                     </div>
                 </div>
 
                 <!-- Şube Performansı -->
-                <div class="glass-card p-6 flex flex-col h-[400px] chart-card">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span class="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
+                <div class="glass-card p-4 md:p-6 flex flex-col h-[350px] md:h-[400px] chart-card">
+                    <div class="flex justify-between items-center mb-4 md:mb-6">
+                        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1.5 h-5 md:h-6 bg-emerald-500 rounded-full"></span>
                             <span id="chartBranchTitle">Şube Performansı</span>
                         </h3>
                     </div>
@@ -300,7 +321,7 @@
             if(!APPSCRIPT_URL) alert("Lütfen APPSCRIPT_URL ekleyin!");
             Chart.defaults.font.family = "'Outfit', sans-serif";
             Chart.defaults.color = '#64748b'; 
-            Chart.register(ChartDataLabels); // Plugin aktif
+            Chart.register(ChartDataLabels);
 
             document.getElementById('periodSelector').addEventListener('change', fetchData);
             showLoading();
@@ -316,9 +337,24 @@
 
                 updateSelector();
                 if(periods && periods.length > 0) fetchData();
-                else { hideLoading(); document.getElementById('lastUpdated').innerHTML = '<span class="text-slate-500">Veri Yok</span>'; }
-            } catch(e) { console.error("Init Error:", e); document.getElementById('lastUpdated').innerHTML = '<span class="text-rose-600">Bağlantı Hatası</span>'; }
+                else { hideLoading(); updateStatus('<span class="text-slate-500">Veri Yok</span>'); }
+            } catch(e) { console.error("Init Error:", e); updateStatus('<span class="text-rose-600">Bağlantı Hatası</span>', 'rose'); }
         });
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
 
         function setMode(newMode) {
             mode = newMode;
@@ -333,7 +369,7 @@
             } else {
                 btnYearly.classList.add('active');
                 btnMonthly.classList.remove('active');
-                document.getElementById('pageTitle').innerText = "Yıllık Trend Analizi";
+                document.getElementById('pageTitle').innerText = "Yıllık Trend";
                 document.getElementById('heatmapLabel').innerText = "AYLIK";
             }
             updateSelector();
@@ -349,41 +385,54 @@
             sel.value = list[0];
         }
 
-        // --- PDF EXPORT FONKSİYONU ---
         function exportToPDF() {
             const element = document.getElementById('report-content');
             
-            // PDF ayarları
+            // Sidebar gizli olmalı (data-html2canvas-ignore eklendi)
+            // Mobilde sidebar zaten gizli
+            
             const opt = {
-                margin:       [0.2, 0.2, 0.2, 0.2], // Kenar boşlukları (inç)
+                margin:       0.2,
                 filename:     `Hedef_AVM_${mode === 'monthly' ? 'Aylik' : 'Yillik'}_Rapor_${new Date().toISOString().slice(0,10)}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } // Yatay A4
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
             };
 
-            // Geçici stil değişiklikleri (Scrollbar'ı kaldır)
+            const btn = document.querySelector('button[onclick="exportToPDF()"]');
+            const originalBtnContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            // Mobilde PDF alırken genişliği fixlemek gerekebilir
             const originalOverflow = element.style.overflow;
             element.style.overflow = 'visible'; 
 
-            // Butonu yükleniyor yap
-            const btn = document.querySelector('button[onclick="exportToPDF()"]');
-            const originalBtnContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Hazırlanıyor...';
-            btn.disabled = true;
-
             html2pdf().set(opt).from(element).save().then(() => {
-                // İşlem bitince eski haline getir
                 element.style.overflow = originalOverflow;
                 btn.innerHTML = originalBtnContent;
                 btn.disabled = false;
             });
         }
 
+        function updateStatus(html, color = 'amber') {
+            const statusHTML = `<i class="fas fa-${color === 'amber' ? 'sync fa-spin' : (color === 'emerald' ? 'check-circle' : 'exclamation-circle')} text-${color}-500"></i> <span class="text-${color}-600">${html}</span>`;
+            const statusClass = `flex items-center gap-2 text-[10px] md:text-xs font-bold px-2 md:px-3 py-0.5 md:py-1 rounded-full transition-all bg-${color}-50 border border-${color}-200 shadow-sm w-fit`;
+            
+            document.getElementById('lastUpdated').innerHTML = html.includes('span') ? html : statusHTML; // Eğer direkt span gelirse onu bas, değilse formatla
+            if(!html.includes('span')) document.getElementById('lastUpdated').innerHTML = statusHTML;
+            document.getElementById('lastUpdated').className = statusClass;
+
+            // Mobile status
+            const mobStatus = document.getElementById('lastUpdatedMobile');
+            if(mobStatus) {
+                mobStatus.innerHTML = statusHTML;
+                mobStatus.className = statusClass;
+            }
+        }
+
         function showLoading() {
-            const status = document.getElementById('lastUpdated');
-            status.innerHTML = '<i class="fas fa-sync fa-spin text-amber-500"></i> <span class="text-amber-600">Veriler Güncelleniyor...</span>';
-            status.className = "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-amber-50 border border-amber-200 shadow-sm";
+            updateStatus('Güncelleniyor...', 'amber');
             document.querySelectorAll('.kpi-value').forEach(el => { el.innerHTML = '0'; el.classList.add('skeleton', 'text-transparent'); });
             document.querySelectorAll('.chart-card canvas').forEach(el => el.style.opacity = '0.3');
             document.getElementById('mediaListContainer').innerHTML = Array(5).fill('<div class="h-12 w-full skeleton rounded-xl"></div>').join('');
@@ -391,9 +440,7 @@
         }
 
         function hideLoading() {
-            const status = document.getElementById('lastUpdated');
-            status.innerHTML = '<i class="fas fa-check-circle text-emerald-500"></i> <span class="text-emerald-600">Veriler Güncel</span>';
-            status.className = "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-all bg-emerald-50 border border-emerald-200 shadow-sm";
+            updateStatus('Veriler Güncel', 'emerald');
             document.querySelectorAll('.kpi-value').forEach(el => el.classList.remove('skeleton', 'text-transparent'));
             document.querySelectorAll('.chart-card canvas').forEach(el => el.style.opacity = '1');
         }
@@ -412,7 +459,7 @@
                 render(data);
                 hideLoading();
             } catch(e) { 
-                document.getElementById('lastUpdated').innerHTML = '<span class="text-rose-600">Hata!</span>';
+                updateStatus('Hata!', 'rose');
                 console.error(e); 
             }
         }
@@ -423,16 +470,13 @@
             document.getElementById('kpi-revenue').innerText = fmt(data.kpis.totalRevenue);
             document.getElementById('kpi-basket').innerText = fmt(data.kpis.avgBasket);
             
-            // TREND GÖSTERGESİ
             const trendEl = document.getElementById('revenue-trend');
             if (data.kpis.trend !== undefined && data.kpis.trend !== null) {
                 trendEl.classList.remove('hidden');
                 const isPositive = data.kpis.trend >= 0;
-                trendEl.className = `mt-2 text-sm font-extrabold flex items-center gap-1 ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`;
+                trendEl.className = `mt-1 md:mt-2 text-[10px] md:text-sm font-extrabold flex items-center gap-1 ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`;
                 trendEl.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> <span>Geçen aya göre %${Math.abs(data.kpis.trend)} ${isPositive ? 'artış' : 'azalış'}</span>`;
-            } else {
-                trendEl.classList.add('hidden');
-            }
+            } else { trendEl.classList.add('hidden'); }
 
             if(mode === 'monthly') {
                 document.getElementById('kpi-sales').innerText = data.kpis.totalSales;
@@ -441,10 +485,9 @@
                 document.getElementById('chartCategoryTitle').innerText = "Kategori Bazlı Ciro";
                 document.getElementById('chartBranchTitle').innerText = "Şube Performansı";
                 
-                // Grafiklerde Veri Etiketlerini Aç (Datalabels) - Belirgin Stil
                 const categoryLabels = {
                     display: true, color: '#1e293b', align: 'end', anchor: 'end', 
-                    font: {weight:'900', size:13, family:"'Outfit', sans-serif"},
+                    font: {weight:'900', size:11, family:"'Outfit', sans-serif"},
                     formatter: (val, ctx) => {
                         let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                         return ((val/sum)*100).toFixed(1) + "%";
@@ -474,15 +517,10 @@
             }
         }
 
-        // --- MEDYA LİSTESİ (% İLE) ---
         function renderMediaList(data, totalRev) {
             const container = document.getElementById('mediaListContainer');
             container.innerHTML = '';
-            
-            if(!data || data.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-400 py-10">Veri bulunamadı</div>';
-                return;
-            }
+            if(!data || data.length === 0) { container.innerHTML = '<div class="text-center text-slate-400 py-10">Veri bulunamadı</div>'; return; }
 
             data.sort((a,b) => b.revenue - a.revenue);
             const maxVal = data[0].revenue || 1;
@@ -497,9 +535,8 @@
 
             data.forEach((item, index) => {
                 if (item.name === 'Diğer') item.name = 'Çağrı';
-
-                const percentOfMax = (item.revenue / maxVal) * 100; // Bar uzunluğu için
-                const percentOfTotal = ((item.revenue / total) * 100).toFixed(1); // Görünen yüzde
+                const percentOfMax = (item.revenue / maxVal) * 100;
+                const percentOfTotal = ((item.revenue / total) * 100).toFixed(1);
                 const formattedRev = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(item.revenue);
                 const color = colors[index % colors.length];
 
@@ -513,41 +550,30 @@
                 else if(nameLower.includes('referans')) icon = 'users';
 
                 const html = `
-                <div class="relative flex items-center justify-between p-3.5 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:shadow-md group">
-                    <div class="absolute left-0 top-0 bottom-0 rounded-xl transition-all duration-1000 ease-out opacity-10" 
-                         style="width: 0%; background-color: ${color.bg};" 
-                         data-width="${percentOfMax}%"></div>
-                    
+                <div class="relative flex items-center justify-between p-3 md:p-3.5 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:shadow-md group">
+                    <div class="absolute left-0 top-0 bottom-0 rounded-xl transition-all duration-1000 ease-out opacity-10" style="width: 0%; background-color: ${color.bg};" data-width="${percentOfMax}%"></div>
                     <div class="relative z-10 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm border border-slate-50 group-hover:scale-110 transition-transform"
-                             style="color: ${color.text}; background-color: white;">
-                            <i class="fab fa-${icon} text-lg"></i>
+                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center shadow-sm border border-slate-50 group-hover:scale-110 transition-transform" style="color: ${color.text}; background-color: white;">
+                            <i class="fab fa-${icon} text-base md:text-lg"></i>
                         </div>
                         <div class="flex flex-col">
-                            <span class="font-bold text-slate-700 text-sm">${item.name}</span>
-                            <span class="text-[10px] text-slate-400 font-medium tracking-wide">
+                            <span class="font-bold text-slate-700 text-xs md:text-sm">${item.name}</span>
+                            <span class="text-[9px] md:text-[10px] text-slate-400 font-medium tracking-wide">
                                 ${item.count || 0} İşlem &bull; 
-                                <span class="text-xs text-slate-600 font-extrabold bg-slate-200 px-2 py-1 rounded-md">%${percentOfTotal}</span>
+                                <span class="text-[9px] md:text-xs text-slate-600 font-extrabold bg-slate-200 px-1.5 py-0.5 rounded-md">%${percentOfTotal}</span>
                             </span>
                         </div>
                     </div>
-                    
-                    <span class="relative z-10 font-bold text-slate-800 text-sm">${formattedRev}</span>
-                </div>
-                `;
+                    <span class="relative z-10 font-bold text-slate-800 text-xs md:text-sm">${formattedRev}</span>
+                </div>`;
                 container.insertAdjacentHTML('beforeend', html);
             });
-
-            setTimeout(() => {
-                container.querySelectorAll('[data-width]').forEach(el => el.style.width = el.dataset.width);
-            }, 100);
+            setTimeout(() => { container.querySelectorAll('[data-width]').forEach(el => el.style.width = el.dataset.width); }, 100);
         }
 
-        // --- ISI HARİTASI ---
         function renderHeatmap(data, type) {
             const container = document.getElementById('heatmapContainer');
             container.innerHTML = '';
-            
             const maxVal = data ? Math.max(...data.map(d => d.count), 1) : 1; 
             const limit = type === 'month' ? 12 : 31;
             
@@ -557,7 +583,6 @@
                     const itemData = data.find(d => parseInt(d.day) === i);
                     count = itemData ? itemData.count : 0;
                 }
-                
                 let heatLevel = 0;
                 if(count > 0) heatLevel = Math.ceil((count / maxVal) * 5);
                 
@@ -573,10 +598,8 @@
         function drawChart(id, type, labels, data, label, indexAxisY = false, customDatalabels = {}) {
             const ctx = document.getElementById(id).getContext('2d');
             if(charts[id]) charts[id].destroy();
-            
             const gradient = ctx.createLinearGradient(0,0,0,400);
-            gradient.addColorStop(0, '#d946ef'); 
-            gradient.addColorStop(1, '#c026d3'); 
+            gradient.addColorStop(0, '#d946ef'); gradient.addColorStop(1, '#c026d3'); 
 
             charts[id] = new Chart(ctx, {
                 type: type,
@@ -594,8 +617,8 @@
                         pointBackgroundColor: '#fff',
                         pointBorderColor: '#c026d3',
                         pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }]
                 },
                 options: {
@@ -603,16 +626,12 @@
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false }, 
-                        // Datalabels config
-                        datalabels: {
-                            display: type === 'bar', // Sadece bar grafiklerde göster
-                            ...customDatalabels // Dışarıdan gelen ayarlar
-                        },
-                        tooltip: { backgroundColor: '#ffffff', titleColor:'#1e293b', bodyColor:'#475569', padding:12, cornerRadius:12, borderColor:'#e2e8f0', borderWidth:1, displayColors:false } 
+                        datalabels: { display: type === 'bar', ...customDatalabels },
+                        tooltip: { backgroundColor: '#ffffff', titleColor:'#1e293b', bodyColor:'#475569', padding:10, cornerRadius:8, borderColor:'#e2e8f0', borderWidth:1, displayColors:false } 
                     },
                     scales: { 
-                        y: { beginAtZero: true, grid: { color:'rgba(0,0,0,0.03)' }, ticks:{ color:'#64748b', font:{size:11} }, border:{display:false} },
-                        x: { grid: { display:false }, ticks:{ color:'#64748b', font:{size:11} }, border:{display:false} }
+                        y: { beginAtZero: true, grid: { color:'rgba(0,0,0,0.03)' }, ticks:{ color:'#64748b', font:{size:10} }, border:{display:false} },
+                        x: { grid: { display:false }, ticks:{ color:'#64748b', font:{size:10} }, border:{display:false} }
                     }
                 }
             });
