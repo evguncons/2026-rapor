@@ -124,7 +124,7 @@
 
         <div class="p-4 border-t border-slate-100">
             <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
-                v5.2 &bull; PDF Fix
+                v5.3 &bull; PDF Fix 2
             </div>
         </div>
     </aside>
@@ -364,6 +364,11 @@
                 return;
             }
 
+            const btn = document.querySelector('button[title="Raporu PDF Olarak Al"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
             const period = document.getElementById('periodSelector').value;
             const today = new Date().toLocaleDateString('tr-TR');
             const kpi = globalApiData.kpis;
@@ -413,10 +418,10 @@
 
             // RAPOR HTML ŞABLONU (TEK PARÇA, PAGE BREAK İLE)
             const reportContent = `
-            <div style="font-family: 'Outfit', sans-serif; color: #1e293b; background: #fff; width: 794px; padding: 0; box-sizing: border-box;">
+            <div id="pdf-report-content" style="font-family: 'Outfit', sans-serif; color: #1e293b; background: #fff; width: 750px; margin: 0 auto; padding: 20px;">
                 
                 <!-- SAYFA 1 -->
-                <div style="padding: 40px; height: 1122px; box-sizing: border-box; position: relative;">
+                <div style="min-height: 1000px; position: relative;">
                     <!-- Header -->
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 3px solid #d946ef; padding-bottom:15px; margin-bottom:25px;">
                         <div>
@@ -433,19 +438,19 @@
                     <div style="display:flex; gap:10px; margin-bottom:30px;">
                         <div style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:10px;">
                             <p style="margin:0; font-size:10px; color:#64748b; font-weight:bold; text-transform:uppercase;">TOPLAM CİRO</p>
-                            <h3 style="margin:8px 0 0; color:#10b981; font-size:20px; font-weight:800;">${fmt(kpi.totalRevenue)}</h3>
+                            <h3 style="margin:8px 0 0; color:#10b981; font-size:18px; font-weight:800;">${fmt(kpi.totalRevenue)}</h3>
                         </div>
                         <div style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:10px;">
                             <p style="margin:0; font-size:10px; color:#64748b; font-weight:bold; text-transform:uppercase;">SATIS</p>
-                            <h3 style="margin:8px 0 0; color:#3b82f6; font-size:20px; font-weight:800;">${kpi.totalSales}</h3>
+                            <h3 style="margin:8px 0 0; color:#3b82f6; font-size:18px; font-weight:800;">${kpi.totalSales}</h3>
                         </div>
                         <div style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:10px;">
                             <p style="margin:0; font-size:10px; color:#64748b; font-weight:bold; text-transform:uppercase;">DÖNÜŞÜM</p>
-                            <h3 style="margin:8px 0 0; color:#f59e0b; font-size:20px; font-weight:800;">%${kpi.conversionRate}</h3>
+                            <h3 style="margin:8px 0 0; color:#f59e0b; font-size:18px; font-weight:800;">%${kpi.conversionRate}</h3>
                         </div>
                         <div style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:10px;">
                             <p style="margin:0; font-size:10px; color:#64748b; font-weight:bold; text-transform:uppercase;">SEPET</p>
-                            <h3 style="margin:8px 0 0; color:#e11d48; font-size:20px; font-weight:800;">${fmt(kpi.avgBasket)}</h3>
+                            <h3 style="margin:8px 0 0; color:#e11d48; font-size:18px; font-weight:800;">${fmt(kpi.avgBasket)}</h3>
                         </div>
                     </div>
 
@@ -469,17 +474,20 @@
                         </table>
                     </div>
                     
-                    <div style="position: absolute; bottom: 40px; left: 40px; right: 40px; text-align:center; color:#94a3b8; font-size:10px;">Sayfa 1 / 2</div>
+                    <div style="text-align:center; color:#94a3b8; font-size:10px; margin-top:20px;">Sayfa 1 / 2</div>
                 </div>
 
+                <!-- PAGE BREAK -->
+                <div style="page-break-before: always;"></div>
+
                 <!-- SAYFA 2 -->
-                <div style="padding: 40px; height: 1122px; box-sizing: border-box; position: relative; page-break-before: always;">
+                <div style="padding-top: 40px; min-height: 1000px; position: relative;">
                     <div style="border-bottom: 2px solid #e2e8f0; padding-bottom:10px; margin-bottom:30px; display:flex; justify-content:space-between; align-items:end;">
                         <h2 style="margin:0; font-size:20px; font-weight:700; color:#334155;">Detaylı Analizler</h2>
                         <span style="font-size:11px; color:#94a3b8;">${period}</span>
                     </div>
 
-                    <div style="display:flex; gap:30px;">
+                    <div style="display:flex; gap:30px; align-items: flex-start;">
                         <!-- Kategori -->
                         <div style="flex:1;">
                             <div style="display:flex; align-items:center; margin-bottom:15px;">
@@ -517,26 +525,28 @@
                         </div>
                     </div>
                     
-                    <div style="position: absolute; bottom: 40px; left: 40px; right: 40px; text-align:center; color:#94a3b8; font-size:10px;">Sayfa 2 / 2</div>
+                    <div style="text-align:center; color:#94a3b8; font-size:10px; margin-top:40px;">Sayfa 2 / 2</div>
                 </div>
             </div>
             `;
 
-            // Geçici bir container oluştur
-            const container = document.createElement('div');
-            container.innerHTML = reportContent;
+            // Geçici bir container oluştur (Overlay)
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.zIndex = '99999'; // En üstte
+            overlay.style.background = 'white'; 
+            overlay.style.overflow = 'auto'; // Kaydırılabilir
             
-            // Konteyner ayarları: Görünür, En Üstte, Beyaz
-            container.style.position = 'fixed'; 
-            container.style.top = '0';
-            container.style.left = '0';
-            container.style.width = '794px'; // A4 width
-            container.style.zIndex = '10000'; // En üstte
-            container.style.background = 'white'; 
-            document.body.appendChild(container);
+            // İçeriği ekle
+            overlay.innerHTML = reportContent;
+            document.body.appendChild(overlay);
 
             const opt = {
-                margin:       0,
+                margin:       0.2,
                 filename:     `Rapor_${period}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { 
@@ -546,30 +556,26 @@
                     scrollY: 0,
                     x: 0,
                     y: 0,
-                    windowWidth: 794 // Container ile aynı
+                    windowWidth: 800 // Genişlik sabitle
                 },
-                jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            const btn = document.querySelector('button[title="Raporu PDF Olarak Al"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            btn.disabled = true;
-
-            // DOM'un tam render edilmesi için kısa gecikme
+            // DOM'un render edilmesi için kısa gecikme
             setTimeout(() => {
-                html2pdf().set(opt).from(container).save().then(() => {
-                    document.body.removeChild(container);
+                const element = document.getElementById('pdf-report-content');
+                html2pdf().set(opt).from(element).save().then(() => {
+                    document.body.removeChild(overlay);
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }).catch(err => {
                     console.error("PDF Hatası:", err);
                     alert("PDF oluşturulamadı.");
-                    if(document.body.contains(container)) document.body.removeChild(container);
+                    document.body.removeChild(overlay);
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 });
-            }, 1000);
+            }, 800);
         }
 
         // --- EXCEL EXPORT FONKSİYONU ---
