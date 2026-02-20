@@ -124,7 +124,7 @@
 
         <div class="p-4 border-t border-slate-100">
             <div class="bg-slate-50 rounded-xl p-3 text-xs text-center text-slate-400 font-medium">
-                v5.3 &bull; PDF Fix 2
+                v5.4 &bull; SMS Link
             </div>
         </div>
     </aside>
@@ -357,7 +357,7 @@
             sel.value = list[0];
         }
 
-        // --- GELİŞMİŞ PDF RAPOR OLUŞTURUCU (TABLO TABANLI - GÜVENLİ RENDER) ---
+        // --- GELİŞMİŞ PDF RAPOR OLUŞTURUCU ---
         function generatePDFReport() {
             if (!globalApiData) {
                 alert("Veri bekleniyor...");
@@ -374,7 +374,7 @@
             const kpi = globalApiData.kpis;
             const fmt = (v) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(v);
 
-            // 1. ŞUBE TABLOSU HTML HAZIRLIĞI
+            // 1. ŞUBE TABLOSU HTML
             let branchRows = '';
             let bData = globalApiData.charts?.branch || [];
             bData.sort((a,b) => b.revenue - a.revenue);
@@ -416,7 +416,6 @@
                 </tr>`;
             });
 
-            // RAPOR HTML ŞABLONU (TEK PARÇA, PAGE BREAK İLE)
             const reportContent = `
             <div id="pdf-report-content" style="font-family: 'Outfit', sans-serif; color: #1e293b; background: #fff; width: 750px; margin: 0 auto; padding: 20px;">
                 
@@ -745,6 +744,7 @@
             }
         }
 
+        // MEDYA LİSTESİNDE SMS İKONU EKLENTİSİ
         function renderMediaList(data, totalRev) {
             const container = document.getElementById('mediaListContainer');
             container.innerHTML = '';
@@ -767,11 +767,14 @@
                 const percentOfTotal = ((item.revenue / total) * 100).toFixed(1);
                 const formattedRev = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(item.revenue);
                 const color = colors[index % colors.length];
+                
+                // İKON BELİRLEME
                 let icon = 'globe';
                 let nameLower = item.name.toLowerCase();
                 if(nameLower.includes('whatsapp')) icon = 'whatsapp';
                 else if(nameLower.includes('instagram')) icon = 'instagram';
                 else if(nameLower.includes('facebook')) icon = 'facebook';
+                else if(nameLower.includes('sms')) icon = 'sms'; // <-- SMS İKONU
                 else if(nameLower.includes('telefon') || nameLower.includes('arama') || nameLower.includes('çağrı')) icon = 'phone';
                 else if(nameLower.includes('mağaza')) icon = 'store';
                 else if(nameLower.includes('referans')) icon = 'users';
